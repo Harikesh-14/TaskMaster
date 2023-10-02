@@ -36,7 +36,7 @@ TaskManager is a web-based todo list manager designed to help you stay organized
 
 ## Technologies Used
 
-- **Frontend:** HTML, CSS, JavaScript, React
+- **Frontend:** HTML, CSS, JavaScript
 
 - **Backend:** Node.js, Express.js
 
