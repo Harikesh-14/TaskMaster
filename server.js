@@ -1,7 +1,6 @@
 const express = require('express');
 const path = require('path')
 const passport = require('passport')
-const flash = require('connect-flash');
 const expressSession = require('express-session')
 require('dotenv').config()
 
@@ -18,10 +17,8 @@ const { initializePassport, isAuthenticated } = require('./passportConfig');
 app.use(expressSession({
     secret: "secret",
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: false
 }))
-
-app.use(flash());
 
 // setting up passport 
 initializePassport(passport)
@@ -47,17 +44,17 @@ app.get('/', (req, res) => {
     }
 })
 
-app.post('/', (req, res, next) => {
-    if (req.isAuthenticated()) {
-        req.logout();
-        console.log('User logged out');
-    }
-    passport.authenticate("local", {
-        successRedirect: '/profile',
-        failureRedirect: '/',
-        failureFlash: true
-    })(req, res, next);
-});
+// app.post('/', (req, res, next) => {
+//     if (req.isAuthenticated()) {
+//         req.logout();
+//         console.log('User logged out');
+//     }
+//     passport.authenticate("local", {
+//         successRedirect: '/profile',
+//         failureRedirect: '/',
+//         failureFlash: true
+//     })(req, res, next);
+// });
 
 // sign in page routes
 app.get('/signin', (req, res) => {
@@ -66,26 +63,56 @@ app.get('/signin', (req, res) => {
 
 app.post('/signin', async (req, res) => {
     try {
-        const profileList = new loginDetails({
-            firstName: req.body.signUpFirstName,
-            lastName: req.body.signUpLastName,
-            emailID: req.body.signUpEmailID,
-            password: req.body.signUpPassword,
-        })
+        const { signUpFirstName, signUpLastName, signUpEmailID, signUpPassword } = req.body;
 
-        await profileList.save()
-        res.redirect('/')
+        if (signUpFirstName && signUpLastName && signUpEmailID && signUpPassword) {
+            // This is a signup request
+            const profileList = new loginDetails({
+                firstName: signUpFirstName,
+                lastName: signUpLastName,
+                emailID: signUpEmailID,
+                password: signUpPassword,
+            });
+
+            await profileList.save();
+            console.log("User registered successfully");
+        } else {
+            // This is a login request
+            passport.authenticate("local", {
+                successRedirect: '/profile',
+                failureRedirect: '/',
+                failureFlash: true
+            })(req, res);
+            return; // Do not proceed to redirect below in case of login
+        }
+
+        res.redirect('/');
     } catch (err) {
-        console.log("An error occurred")
+        console.error("An error occurred", err);
         res.status(500).json({
-            error: "Error while registering the detail",
+            error: "Error while registering or logging in",
             errorMessage: err
-        })
+        });
     }
-})
+});
 
 app.get('/profile', isAuthenticated, (req, res) => {
-    res.render('profile', { user: req.user });
+    res.render('profile');
+});
+
+// logout route
+app.get('/logout', function (req, res, next) {
+    req.logout(function (err) {
+        if (err) { return next(err); }
+        res.redirect('/');
+    });
+});
+
+app.post('/logout', function (req, res, next) {
+    req.logout(function (err) {
+        if (err) { return next(err); }
+        res.redirect('/');
+    });
 });
 
 app.listen(port, () => {
