@@ -97,7 +97,8 @@ app.post('/signin', async (req, res) => {
 });
 
 app.get('/profile', isAuthenticated, (req, res) => {
-    res.render('profile');
+    const { firstName } = req.user
+    res.render('profile', { firstName });
 });
 
 // logout route
